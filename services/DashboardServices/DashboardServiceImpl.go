@@ -6,14 +6,19 @@ import (
 	usermodel "github.com/lenna-ai/azureOneSmile.git/db/models/UserModel"
 )
 
-func (dashboardServicesImpl *DashboardServicesImpl) TicketCompletionPerformace(app *fiber.Ctx) (dashboards []dashboardmodel.DashboardModel, err error) {
+func (dashboardServicesImpl *DashboardServicesImpl) TicketCompletionPerformace(app *fiber.Ctx, pageSize string, offset string) (dashboards []dashboardmodel.DashboardModel, totalCount int64, err error) {
 	db := dashboardServicesImpl.DB
 	dashboards, err = dashboardServicesImpl.DashboardRepository.TicketCompletionPerformace(app, db)
 	if err != nil {
-		return dashboards, err
+		return dashboards, 0, err
 	}
-	return dashboards, nil
+	totalCount, err = dashboardServicesImpl.DashboardRepository.TotalTicketCompletionPerformace(app, db, pageSize, offset)
+	if err != nil {
+		return dashboards, 0, err
+	}
+	return dashboards, totalCount, nil
 }
+
 func (dashboardServicesImpl *DashboardServicesImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error) {
 	db := dashboardServicesImpl.DB
 	DashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.ModalTicketCompletionPerformace(app, db, "1", "1")

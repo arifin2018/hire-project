@@ -10,7 +10,7 @@ import (
 
 type DashboardServices interface {
 	Create(app *fiber.Ctx, user *usermodel.User) error
-	TicketCompletionPerformace(app *fiber.Ctx) (dashboards []dashboardmodel.DashboardModel, err error)
+	TicketCompletionPerformace(app *fiber.Ctx, pageSize string, offset string) (dashboards []dashboardmodel.DashboardModel, totalCount int64, err error)
 	ModalTicketCompletionPerformace(app *fiber.Ctx) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error)
 	SubModalTicketCompletionPerformace(app *fiber.Ctx) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
 }
