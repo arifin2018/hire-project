@@ -7,5 +7,6 @@ type DashboardModel struct {
 	ExternalSupportType1 int    `gorm:"column:External Support (Type 1)"`
 	InternalBugType2     int    `gorm:"column:Internal Bug (Type 2)"`
 	InternalSupportType1 int    `gorm:"column:Internal Support (Type 1)"`
+	IOW                  int    `gorm:"column:IOW"`
 	TotalTickets         int    `gorm:"column:TotalTickets"`
 }

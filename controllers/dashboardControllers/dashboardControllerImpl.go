@@ -8,12 +8,14 @@ import (
 
 func (dashboardControllerImpl *DashboardControllerImpl) TicketCompletionPerformace(app *fiber.Ctx) error {
 
-	// if err := dashboardControllerImpl.DashboardServices.Create(app, user); err != nil {
-	// 	return err
-	// }
+	dashboard, err := dashboardControllerImpl.DashboardServices.TicketCompletionPerformace(app)
+	if err != nil {
+		return helpers.ResultFailedJsonApi(app, fiber.Map{}, err.Error())
+	}
 
 	result := fiber.Map{
-		"data": "successfully created",
+		"data":   dashboard,
+		"status": "successfully created",
 	}
 
 	return helpers.ResultSuccessCreateJsonApi(app, result)
