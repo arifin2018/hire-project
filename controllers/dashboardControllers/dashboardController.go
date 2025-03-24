@@ -6,11 +6,14 @@ import (
 )
 
 type DashboardController interface {
-	Create(app *fiber.Ctx) error 
+	Create(app *fiber.Ctx) error
+	TicketCompletionPerformace(app *fiber.Ctx) error
+	ModalTicketCompletionPerformace(app *fiber.Ctx) error
+	SubModalTicketCompletionPerformace(app *fiber.Ctx) error
 }
 
 type DashboardControllerImpl struct {
-	DashboardServices dashboardservices.DashboardServices 
+	DashboardServices dashboardservices.DashboardServices
 }
 
 func NewDashboardController(dashboardservices dashboardservices.DashboardServices) *DashboardControllerImpl {

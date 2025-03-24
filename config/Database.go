@@ -2,11 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -16,45 +15,38 @@ var DB *gorm.DB
 
 func Database() *gorm.DB {
 	createDirStorageLogsDatabase()
-    date := time.Now().Format("01-02-2006")
-    logLumberJack := &lumberjack.Logger{
-        Filename:   fmt.Sprintf("storage/logs/database/%v.log",date),
-        MaxSize:    10,  // Maximum size in megabytes before log is rotated
-        MaxBackups: 7,   // Maximum number of old log files to keep
-        MaxAge:     1,   // Maximum number of days to retain old log files
-        Compress:   true, // Compress old log files
-        LocalTime:  true,                        // Use local time for log rotation
-    }
+	filePath := "./storage/logs/database/" + time.Now().Format("01-02-2006") + ".log"
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0744)
+	if err != nil {
+		panic(fmt.Sprintf("error opening file database: %v", err))
+	}
 
-    loggerNew := logrus.New()
-    loggerNew.SetOutput(logLumberJack)
-    loggerNew.SetFormatter(&logrus.JSONFormatter{})
+	logWriter := &reopenableWriter{
+		filePath: filePath,
+		file:     file,
+	}
+	// Connect to the database using GORM
+	// migrate -path db/migrations -database "mysql://arifin:Arifin123\!@tcp(10.217.18.4:3306)/lennadb" down
+	// migrate -path db/migrations -database "mysql://arifin:Arifin123\!@tcp(10.217.18.4:3306)/lennadb" down
+	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4&parseTime=True&loc=Local", os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
+	newLogger := logger.New(
+		log.New(logWriter, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Info, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			ParameterizedQueries:      false,       // include params in the SQL log
+			Colorful:                  false,       // Disable color
+		},
+	)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: newLogger, // Set the custom GORM logger
+	})
 
-    // Set up GORM logger
-    newLogger := logger.New(
-        loggerNew, // Use logrus as the GORM logger output
-        logger.Config{
-            SlowThreshold: time.Second,   // Slow SQL query threshold
-            LogLevel:      logger.Info,   // Log level (Info, Warn, Error)
-            IgnoreRecordNotFoundError: true, // Ignore ErrRecordNotFound error for logger
-            Colorful:      false,         // Disable color output (logrus handles formatting)
-        },
-    )
-
-    // Connect to the database using GORM
-    // migrate -path db/migrations -database "mysql://arifin:Arifin123\!@tcp(10.217.18.4:3306)/lennadb" down
-    // migrate -path db/migrations -database "mysql://arifin:Arifin123\!@tcp(10.217.18.4:3306)/lennadb" down
-    dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4&parseTime=True&loc=Local", os.Getenv("DB_USERNAME"),os.Getenv("DB_PASSWORD"),os.Getenv("DB_HOST"),os.Getenv("DB_PORT"),os.Getenv("DB_NAME"))
-    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-        Logger: newLogger, // Set the custom GORM logger
-    })
-
-    if err != nil {
-        loggerNew.Error("Failed to connect to the database:", err)
-        return db
-    }
-
-    loggerNew.Info("Connected to the database successfully")
+	if err != nil {
+		log.Fatal("Failed to connect to the database: ", err)
+		return db
+	}
 
 	return db
 }
@@ -70,4 +62,21 @@ func createDirStorageLogsDatabase() {
 	} else {
 		fmt.Println("The provided directory named", dir, "exists")
 	}
+}
+
+// reopenableWriter is a custom writer that reopens the file if it's deleted
+type reopenableWriter struct {
+	filePath string
+	file     *os.File
+}
+
+func (w *reopenableWriter) Write(p []byte) (n int, err error) {
+	if _, err := os.Stat(w.filePath); os.IsNotExist(err) {
+		// Reopen the file if it was deleted
+		w.file, err = os.OpenFile(w.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0744)
+		if err != nil {
+			return 0, fmt.Errorf("error reopening file: %v", err)
+		}
+	}
+	return w.file.Write(p)
 }
