@@ -21,25 +21,28 @@ func (dashboardControllerImpl *DashboardControllerImpl) TicketCompletionPerforma
 	return helpers.ResultSuccessCreateJsonApi(app, result)
 }
 func (dashboardControllerImpl *DashboardControllerImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) error {
-
-	// if err := dashboardControllerImpl.DashboardServices.Create(app, user); err != nil {
-	// 	return err
-	// }
+	DashboardModalTicketModel, err := dashboardControllerImpl.DashboardServices.ModalTicketCompletionPerformace(app)
+	if err != nil {
+		return helpers.ResultFailedJsonApi(app, fiber.Map{}, err.Error())
+	}
 
 	result := fiber.Map{
-		"data": "successfully created",
+		"data":   DashboardModalTicketModel,
+		"status": "successfully created",
 	}
 
 	return helpers.ResultSuccessCreateJsonApi(app, result)
 }
-func (dashboardControllerImpl *DashboardControllerImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) error {
 
-	// if err := dashboardControllerImpl.DashboardServices.Create(app, user); err != nil {
-	// 	return err
-	// }
+func (dashboardControllerImpl *DashboardControllerImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) error {
+	SubDashboardModalTicketModel, err := dashboardControllerImpl.DashboardServices.SubModalTicketCompletionPerformace(app)
+	if err != nil {
+		return helpers.ResultFailedJsonApi(app, fiber.Map{}, err.Error())
+	}
 
 	result := fiber.Map{
-		"data": "successfully created",
+		"data":   SubDashboardModalTicketModel,
+		"status": "successfully created",
 	}
 
 	return helpers.ResultSuccessCreateJsonApi(app, result)

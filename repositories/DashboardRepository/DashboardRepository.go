@@ -10,8 +10,8 @@ import (
 type DashboardRepository interface {
 	Create(app *fiber.Ctx, user *usermodel.User) error
 	TicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) (dashboards []dashboardmodel.DashboardModel, err error)
-	ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) error
-	SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) error
+	ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error)
+	SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string, isPIC string) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
 }
 
 type DashboardRepositoryImpl struct {

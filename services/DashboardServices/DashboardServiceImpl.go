@@ -14,20 +14,26 @@ func (dashboardServicesImpl *DashboardServicesImpl) TicketCompletionPerformace(a
 	}
 	return dashboards, nil
 }
-func (dashboardServicesImpl *DashboardServicesImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) error {
+func (dashboardServicesImpl *DashboardServicesImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error) {
 	db := dashboardServicesImpl.DB
-	if err := dashboardServicesImpl.DashboardRepository.ModalTicketCompletionPerformace(app, db); err != nil {
-		panic(err.Error())
+	DashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.ModalTicketCompletionPerformace(app, db, "1", "1")
+	if err != nil {
+		return DashboardModalTicketModel, err
 	}
-	return nil
+
+	return DashboardModalTicketModel, nil
 }
-func (dashboardServicesImpl *DashboardServicesImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) error {
+
+// SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string, isPIC string) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
+func (dashboardServicesImpl *DashboardServicesImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error) {
 	db := dashboardServicesImpl.DB
-	if err := dashboardServicesImpl.DashboardRepository.SubModalTicketCompletionPerformace(app, db); err != nil {
-		panic(err.Error())
+	SubDashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.SubModalTicketCompletionPerformace(app, db, "1", "1", "1")
+	if err != nil {
+		return SubDashboardModalTicketModel, err
 	}
-	return nil
+	return SubDashboardModalTicketModel, err
 }
+
 func (dashboardServicesImpl *DashboardServicesImpl) Create(app *fiber.Ctx, user *usermodel.User) error {
 	if err := dashboardServicesImpl.DashboardRepository.Create(app, user); err != nil {
 		panic(err.Error())

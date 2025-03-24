@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	dashboardmodel "github.com/lenna-ai/azureOneSmile.git/db/models/DashboardModel"
 	usermodel "github.com/lenna-ai/azureOneSmile.git/db/models/UserModel"
+	gormhelpers "github.com/lenna-ai/azureOneSmile.git/helpers/gormHelpers"
 	"gorm.io/gorm"
 )
 
@@ -47,26 +48,52 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) TicketCompletionPerforma
 			) > 0
 			ORDER BY nameAssigned;
 		`
-	if err := db.Raw(query).Scan(&dashboards).Error; err != nil {
+	if err := db.Scopes(gormhelpers.Paginate(app)).Raw(query).Scan(&dashboards).Error; err != nil {
 		return dashboards, err
 	}
 	return dashboards, nil
 }
-func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) error {
-	fmt.Println("user")
-	// fmt.Printf("%+v\n", user)
-	// if err := dashboardRepositoryImpl.DB.Create(user).Error; err != nil {
-	// 	return err
-	// }
-	return nil
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error) {
+	query := fmt.Sprintf(`
+			SELECT 
+				t.documentNo AS TicketDocumentNo,
+				t.estimatedManhours AS EstimatedManhours
+			FROM Ticket t
+			JOIN (
+				SELECT ticketId, MIN(memberId) AS memberId 
+				FROM TicketMember 
+				WHERE isPIC = 1 
+				GROUP BY ticketId
+			) tm ON t.id = tm.ticketId
+			JOIN MemberPersonal mp ON tm.memberId = mp.id
+			WHERE t.isDeleted IS NULL 
+			AND t.typeId = %s 
+			AND t.isExternal = %s
+			AND mp.id = :assigneeId 
+			ORDER BY t.createdAt DESC;
+	`, typeId, isExternal)
+	if err := db.Scopes(gormhelpers.Paginate(app)).Raw(query).Scan(&DashboardModalTicketModel).Error; err != nil {
+		return DashboardModalTicketModel, err
+	}
+	return DashboardModalTicketModel, nil
 }
-func (dashboardRepositoryImpl *DashboardRepositoryImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) error {
-	fmt.Println("user")
-	// fmt.Printf("%+v\n", user)
-	// if err := dashboardRepositoryImpl.DB.Create(user).Error; err != nil {
-	// 	return err
-	// }
-	return nil
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string, isPIC string) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error) {
+	query := fmt.Sprintf(`
+		SELECT 
+			IFNULL(SUM(t.estimatedManhours), 0) AS totalEstimatedWork
+		FROM Ticket t
+		JOIN TicketMember tm ON t.id = tm.ticketId 
+		JOIN MemberPersonal mp ON tm.memberId = mp.id
+		WHERE t.isDeleted IS NULL 
+		AND t.typeId = %s
+		AND t.isExternal = %s
+		AND tm.isPIC = %s  
+		AND mp.id = :assigneeId;
+	`, typeId, isExternal, isPIC)
+	if err := db.Scopes(gormhelpers.Paginate(app)).Raw(query).Scan(&SubDashboardModalTicketModel).Error; err != nil {
+		return SubDashboardModalTicketModel, err
+	}
+	return SubDashboardModalTicketModel, nil
 }
 func (dashboardRepositoryImpl *DashboardRepositoryImpl) Create(app *fiber.Ctx, user *usermodel.User) error {
 	fmt.Println("user")

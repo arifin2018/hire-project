@@ -15,10 +15,14 @@ func initCornJob() {
 	scheduler := cron.New(cron.WithLocation(jakartaTime))
 	var wg sync.WaitGroup
 
-	go scheduler.AddFunc("59 23 * * *", func() {
+	go scheduler.AddFunc("* * * * *", func() {
 		wg.Add(1)
-		intTimeDay,_ := strconv.Atoi(os.Getenv("TIME_STORAGE_DAY"))
+		intTimeDay, _ := strconv.Atoi(os.Getenv("TIME_STORAGE_DAY"))
 		console.RemoveFileStorage("./storage/logs", intTimeDay)
+	})
+
+	go scheduler.AddFunc("* * * * *", func() {
+		wg.Add(1)
 	})
 
 	wg.Wait()

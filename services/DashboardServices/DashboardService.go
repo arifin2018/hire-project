@@ -11,8 +11,8 @@ import (
 type DashboardServices interface {
 	Create(app *fiber.Ctx, user *usermodel.User) error
 	TicketCompletionPerformace(app *fiber.Ctx) (dashboards []dashboardmodel.DashboardModel, err error)
-	ModalTicketCompletionPerformace(app *fiber.Ctx) error
-	SubModalTicketCompletionPerformace(app *fiber.Ctx) error
+	ModalTicketCompletionPerformace(app *fiber.Ctx) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error)
+	SubModalTicketCompletionPerformace(app *fiber.Ctx) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
 }
 
 type DashboardServicesImpl struct {

@@ -10,3 +10,11 @@ type DashboardModel struct {
 	IOW                  int    `gorm:"column:IOW"`
 	TotalTickets         int    `gorm:"column:TotalTickets"`
 }
+type DashboardModalTicketModel struct {
+	TicketDocumentNo  string `gorm:"column:TicketDocumentNo"`
+	EstimatedManhours string `gorm:"column:EstimatedManhours"`
+}
+
+type DashboardSubModalTicketModel struct {
+	TotalEstimatedWork string `gorm:"column:TotalEstimatedWork"`
+}
