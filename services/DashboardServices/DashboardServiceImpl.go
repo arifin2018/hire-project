@@ -1,6 +1,8 @@
 package dashboardservices
 
 import (
+	"sync"
+
 	"github.com/gofiber/fiber/v2"
 	dashboardmodel "github.com/lenna-ai/azureOneSmile.git/db/models/DashboardModel"
 	usermodel "github.com/lenna-ai/azureOneSmile.git/db/models/UserModel"
@@ -8,13 +10,46 @@ import (
 
 func (dashboardServicesImpl *DashboardServicesImpl) TicketCompletionPerformace(app *fiber.Ctx, pageSize int, offset int) (dashboards []dashboardmodel.DashboardModel, totalCount int64, err error) {
 	db := dashboardServicesImpl.DB
-	dashboards, err = dashboardServicesImpl.DashboardRepository.TicketCompletionPerformace(app, db, pageSize, offset)
-	if err != nil {
-		return dashboards, 0, err
-	}
-	totalCount, err = dashboardServicesImpl.DashboardRepository.TotalTicketCompletionPerformace(app, db)
-	if err != nil {
-		return dashboards, 0, err
+	var wg sync.WaitGroup
+	var mu sync.Mutex              // Untuk menghindari race condition saat update variabel hasil
+	errChan := make(chan error, 2) // Menyimpan error jika terjadi
+
+	wg.Add(2)
+
+	// Goroutine untuk mengambil data dashboards
+	go func() {
+		defer wg.Done()
+		result, queryErr := dashboardServicesImpl.DashboardRepository.TicketCompletionPerformace(app, db, pageSize, offset)
+		mu.Lock()
+		if queryErr != nil {
+			errChan <- queryErr
+		} else {
+			dashboards = result
+		}
+		mu.Unlock()
+	}()
+
+	// Goroutine untuk mengambil total count
+	go func() {
+		defer wg.Done()
+		count, queryErr := dashboardServicesImpl.DashboardRepository.TotalTicketCompletionPerformace(app, db)
+		mu.Lock()
+		if queryErr != nil {
+			errChan <- queryErr
+		} else {
+			totalCount = count
+		}
+		mu.Unlock()
+	}()
+
+	wg.Wait()
+	close(errChan)
+
+	// Cek apakah ada error dari salah satu query
+	for queryErr := range errChan {
+		if queryErr != nil {
+			return dashboards, 0, queryErr
+		}
 	}
 
 	return dashboards, totalCount, nil
