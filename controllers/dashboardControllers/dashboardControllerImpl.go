@@ -10,20 +10,14 @@ import (
 )
 
 func (dashboardControllerImpl *DashboardControllerImpl) TicketCompletionPerformace(app *fiber.Ctx) error {
-	page := app.Query("page")
-	pageSize := app.Query("page_size")
+	page, _ := strconv.Atoi(app.Query("page"))
+	pageSize, _ := strconv.Atoi(app.Query("page_size"))
 	dashboard, totalCount, err := dashboardControllerImpl.DashboardServices.TicketCompletionPerformace(app, pageSize, page)
 	if err != nil {
 		return helpers.ResultFailedJsonApi(app, fiber.Map{}, err.Error())
 	}
 
-	result := fiber.Map{
-		"data":   dashboard,
-		"status": "successfully created",
-	}
-	pageInt, _ := strconv.Atoi(page)
-	pageSizeInt, _ := strconv.Atoi(pageSize)
-	return helpers.ResultSuccessJsonApi(app, gormhelpers.PaginatedResponse(pageInt, pageSizeInt, totalCount, result))
+	return helpers.ResultSuccessJsonApi(app, gormhelpers.PaginatedResponse(page, pageSize, totalCount, dashboard))
 }
 
 func (dashboardControllerImpl *DashboardControllerImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) error {

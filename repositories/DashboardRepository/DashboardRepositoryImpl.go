@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (dashboardRepositoryImpl *DashboardRepositoryImpl) TicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) (dashboards []dashboardmodel.DashboardModel, err error) {
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) TicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, pageSize int, page int) (dashboards []dashboardmodel.DashboardModel, err error) {
 	query := `
 			SELECT 
 				mp.id as AssigneeID,
@@ -46,15 +46,16 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) TicketCompletionPerforma
 					ELSE 0 
 				END
 			) > 0
-			ORDER BY nameAssigned;
+			ORDER BY nameAssigned
+			LIMIT ? OFFSET ?;
 		`
-	if err := db.Raw(query).Scan(&dashboards).Error; err != nil {
+	if err := db.Raw(query, pageSize, page).Scan(&dashboards).Error; err != nil {
 		return dashboards, err
 	}
 	return dashboards, nil
 }
 
-func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, pageSize string, offset string) (totalCount int64, err error) {
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) (totalCount int64, err error) {
 	query := fmt.Sprintf(`
 			SELECT COUNT(*) FROM (
 				SELECT 
@@ -75,9 +76,8 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalTicketCompletionPer
 						ELSE 0 
 					END
 				) > 0
-				LIMIT %s OFFSET %s  -- Sesuai pagination
 			) AS paginatedResult;
-		`, pageSize, offset)
+		`)
 	if err := db.Raw(query).Scan(&totalCount).Error; err != nil {
 		return totalCount, err
 	}
