@@ -112,23 +112,24 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPer
 
 func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, assigneeId int) (totalCount int64, err error) {
 	query := fmt.Sprintf(`
-			select count(*) from (
-			SELECT 
-				t.documentNo AS TicketDocumentNo,
-				t.estimatedManhours AS EstimatedManhours
-			FROM Ticket t
-			JOIN (
-				SELECT ticketId, MIN(memberId) AS memberId 
-				FROM TicketMember 
-				WHERE isPIC = 1 
-				GROUP BY ticketId
-			) tm ON t.id = tm.ticketId
-			JOIN MemberPersonal mp ON tm.memberId = mp.id
-			WHERE t.isDeleted IS NULL 
-			AND t.typeId = %v 
-			AND t.isExternal = %v
-			AND mp.id = %v
-			ORDER BY t.createdAt DESC);
+		SELECT COUNT(*) AS TotalCount
+			FROM (
+				SELECT 
+					t.documentNo AS TicketDocumentNo,
+					t.estimatedManhours AS EstimatedManhours
+				FROM Ticket t
+				JOIN (
+					SELECT ticketId, MIN(memberId) AS memberId 
+					FROM TicketMember 
+					WHERE isPIC = 1 
+					GROUP BY ticketId
+				) tm ON t.id = tm.ticketId
+				JOIN MemberPersonal mp ON tm.memberId = mp.id
+				WHERE t.isDeleted IS NULL 
+				AND t.typeId = %v 
+				AND t.isExternal = %v
+				AND mp.id = %v
+			) AS subquery;
 	`, typeId, isExternal, assigneeId)
 	if err := db.Raw(query).Scan(&totalCount).Error; err != nil {
 		return totalCount, err
