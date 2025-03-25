@@ -55,14 +55,18 @@ func (dashboardServicesImpl *DashboardServicesImpl) TicketCompletionPerformace(a
 	return dashboards, totalCount, nil
 }
 
-func (dashboardServicesImpl *DashboardServicesImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error) {
+func (dashboardServicesImpl *DashboardServicesImpl) ModalTicketCompletionPerformace(app *fiber.Ctx, pageSize int, page int, typeId int, isExternal int, assigneeId int) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, totalCount int64, err error) {
 	db := dashboardServicesImpl.DB
-	DashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.ModalTicketCompletionPerformace(app, db, "1", "1")
+	DashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.ModalTicketCompletionPerformace(app, db, typeId, isExternal, assigneeId)
 	if err != nil {
-		return DashboardModalTicketModel, err
+		return DashboardModalTicketModel, 0, err
+	}
+	count, err := dashboardServicesImpl.DashboardRepository.TotalModalTicketCompletionPerformace(app, db, typeId, isExternal)
+	if err != nil {
+		return DashboardModalTicketModel, 0, err
 	}
 
-	return DashboardModalTicketModel, nil
+	return DashboardModalTicketModel, count, nil
 }
 
 // SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string, isPIC string) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)

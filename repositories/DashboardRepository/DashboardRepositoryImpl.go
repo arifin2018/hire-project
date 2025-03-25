@@ -84,7 +84,7 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalTicketCompletionPer
 	return totalCount, nil
 }
 
-func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error) {
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, assigneeId int) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error) {
 	query := fmt.Sprintf(`
 			SELECT 
 				t.documentNo AS TicketDocumentNo,
@@ -98,16 +98,43 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPer
 			) tm ON t.id = tm.ticketId
 			JOIN MemberPersonal mp ON tm.memberId = mp.id
 			WHERE t.isDeleted IS NULL 
-			AND t.typeId = %s 
-			AND t.isExternal = %s
-			AND mp.id = :assigneeId 
+			AND t.typeId = %v 
+			AND t.isExternal = %v
+			AND mp.id = %v
 			ORDER BY t.createdAt DESC;
-	`, typeId, isExternal)
+	`, typeId, isExternal, assigneeId)
 	if err := db.Scopes(gormhelpers.Paginate(app)).Raw(query).Scan(&DashboardModalTicketModel).Error; err != nil {
 		return DashboardModalTicketModel, err
 	}
 	return DashboardModalTicketModel, nil
 }
+
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int) (totalCount int64, err error) {
+	query := fmt.Sprintf(`
+			select count(*) from (
+			SELECT 
+				t.documentNo AS TicketDocumentNo,
+				t.estimatedManhours AS EstimatedManhours
+			FROM Ticket t
+			JOIN (
+				SELECT ticketId, MIN(memberId) AS memberId 
+				FROM TicketMember 
+				WHERE isPIC = 1 
+				GROUP BY ticketId
+			) tm ON t.id = tm.ticketId
+			JOIN MemberPersonal mp ON tm.memberId = mp.id
+			WHERE t.isDeleted IS NULL 
+			AND t.typeId = %v 
+			AND t.isExternal = %v
+			AND mp.id = :assigneeId 
+			ORDER BY t.createdAt DESC);
+	`, typeId, isExternal)
+	if err := db.Raw(query).Scan(&totalCount).Error; err != nil {
+		return totalCount, err
+	}
+	return totalCount, nil
+}
+
 func (dashboardRepositoryImpl *DashboardRepositoryImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string, isPIC string) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error) {
 	query := fmt.Sprintf(`
 		SELECT 

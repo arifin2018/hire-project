@@ -21,17 +21,18 @@ func (dashboardControllerImpl *DashboardControllerImpl) TicketCompletionPerforma
 }
 
 func (dashboardControllerImpl *DashboardControllerImpl) ModalTicketCompletionPerformace(app *fiber.Ctx) error {
-	DashboardModalTicketModel, err := dashboardControllerImpl.DashboardServices.ModalTicketCompletionPerformace(app)
+	page, _ := strconv.Atoi(app.Query("page"))
+	pageSize, _ := strconv.Atoi(app.Query("page_size"))
+	typeId, _ := strconv.Atoi(app.Query("typeId"))
+	isExternal, _ := strconv.Atoi(app.Query("isExternal"))
+	assigneeId, _ := strconv.Atoi(app.Query("assigneeId"))
+
+	DashboardModalTicketModel, totalCount, err := dashboardControllerImpl.DashboardServices.ModalTicketCompletionPerformace(app, pageSize, page, typeId, isExternal, assigneeId)
 	if err != nil {
 		return helpers.ResultFailedJsonApi(app, fiber.Map{}, err.Error())
 	}
 
-	result := fiber.Map{
-		"data":   DashboardModalTicketModel,
-		"status": "successfully created",
-	}
-
-	return helpers.ResultSuccessCreateJsonApi(app, result)
+	return helpers.ResultSuccessJsonApi(app, gormhelpers.PaginatedResponse(page, pageSize, totalCount, DashboardModalTicketModel))
 }
 
 func (dashboardControllerImpl *DashboardControllerImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) error {
