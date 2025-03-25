@@ -104,7 +104,7 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) ModalTicketCompletionPer
 			ORDER BY t.createdAt DESC
 			LIMIT ? OFFSET ?;
 	`, typeId, isExternal, assigneeId)
-	if err := db.Raw(query).Scan(&DashboardModalTicketModel).Error; err != nil {
+	if err := db.Raw(query, pageSize, page).Scan(&DashboardModalTicketModel).Error; err != nil {
 		return DashboardModalTicketModel, err
 	}
 	return DashboardModalTicketModel, nil
