@@ -36,17 +36,17 @@ func (dashboardControllerImpl *DashboardControllerImpl) ModalTicketCompletionPer
 }
 
 func (dashboardControllerImpl *DashboardControllerImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) error {
-	SubDashboardModalTicketModel, err := dashboardControllerImpl.DashboardServices.SubModalTicketCompletionPerformace(app)
+	page, _ := strconv.Atoi(app.Query("page"))
+	pageSize, _ := strconv.Atoi(app.Query("page_size"))
+	typeId, _ := strconv.Atoi(app.Query("typeId"))
+	isExternal, _ := strconv.Atoi(app.Query("isExternal"))
+	isPIC, _ := strconv.Atoi(app.Query("isPIC"))
+	assigneeId, _ := strconv.Atoi(app.Query("assigneeId"))
+	SubDashboardModalTicketModel, totalCount, err := dashboardControllerImpl.DashboardServices.SubModalTicketCompletionPerformace(app, pageSize, page, typeId, isExternal, isPIC, assigneeId)
 	if err != nil {
 		return helpers.ResultFailedJsonApi(app, fiber.Map{}, err.Error())
 	}
-
-	result := fiber.Map{
-		"data":   SubDashboardModalTicketModel,
-		"status": "successfully created",
-	}
-
-	return helpers.ResultSuccessCreateJsonApi(app, result)
+	return helpers.ResultSuccessJsonApi(app, gormhelpers.PaginatedResponse(page, pageSize, totalCount, SubDashboardModalTicketModel))
 }
 
 func (dashboardControllerImpl *DashboardControllerImpl) Create(app *fiber.Ctx) error {

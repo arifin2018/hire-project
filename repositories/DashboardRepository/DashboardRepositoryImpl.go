@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	dashboardmodel "github.com/lenna-ai/azureOneSmile.git/db/models/DashboardModel"
 	usermodel "github.com/lenna-ai/azureOneSmile.git/db/models/UserModel"
-	gormhelpers "github.com/lenna-ai/azureOneSmile.git/helpers/gormHelpers"
 	"gorm.io/gorm"
 )
 
@@ -137,7 +136,7 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalModalTicketCompleti
 	return totalCount, nil
 }
 
-func (dashboardRepositoryImpl *DashboardRepositoryImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, isPIC int, assigneeId int) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error) {
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, pageSize int, page int, typeId int, isExternal int, isPIC int, assigneeId int) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error) {
 	query := fmt.Sprintf(`
 		SELECT 
 			IFNULL(SUM(t.estimatedManhours), 0) AS totalEstimatedWork
@@ -148,13 +147,37 @@ func (dashboardRepositoryImpl *DashboardRepositoryImpl) SubModalTicketCompletion
 		AND t.typeId = %v
 		AND t.isExternal = %v
 		AND tm.isPIC = %v  
-		AND mp.id = %v;
+		AND mp.id = %v
+		LIMIT ? OFFSET ?;
 	`, typeId, isExternal, isPIC, assigneeId)
-	if err := db.Scopes(gormhelpers.Paginate(app)).Raw(query).Scan(&SubDashboardModalTicketModel).Error; err != nil {
+	if err := db.Raw(query, pageSize, page).Scan(&SubDashboardModalTicketModel).Error; err != nil {
 		return SubDashboardModalTicketModel, err
 	}
 	return SubDashboardModalTicketModel, nil
 }
+
+func (dashboardRepositoryImpl *DashboardRepositoryImpl) TotalSubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, isPIC int, assigneeId int) (totalCount int64, err error) {
+	query := fmt.Sprintf(`
+		SELECT COUNT(*) AS TotalCount
+			FROM (
+				SELECT 
+					IFNULL(SUM(t.estimatedManhours), 0) AS totalEstimatedWork
+				FROM Ticket t
+				JOIN TicketMember tm ON t.id = tm.ticketId 
+				JOIN MemberPersonal mp ON tm.memberId = mp.id
+				WHERE t.isDeleted IS NULL 
+				AND t.typeId = %v
+				AND t.isExternal = %v
+				AND tm.isPIC = %v  
+				AND mp.id = %v
+			) AS subquery;
+	`, typeId, isExternal, isPIC, assigneeId)
+	if err := db.Raw(query).Scan(&totalCount).Error; err != nil {
+		return totalCount, err
+	}
+	return totalCount, nil
+}
+
 func (dashboardRepositoryImpl *DashboardRepositoryImpl) Create(app *fiber.Ctx, user *usermodel.User) error {
 	fmt.Println("user")
 	fmt.Printf("%+v\n", user)

@@ -70,13 +70,18 @@ func (dashboardServicesImpl *DashboardServicesImpl) ModalTicketCompletionPerform
 }
 
 // SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId string, isExternal string, isPIC string) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
-func (dashboardServicesImpl *DashboardServicesImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error) {
+func (dashboardServicesImpl *DashboardServicesImpl) SubModalTicketCompletionPerformace(app *fiber.Ctx, pageSize int, page int, typeId int, isExternal int, isPIC int, assigneeId int) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, totalCount int64, err error) {
 	db := dashboardServicesImpl.DB
-	SubDashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.SubModalTicketCompletionPerformace(app, db, 1, 1, 1, 1)
+	SubDashboardModalTicketModel, err = dashboardServicesImpl.DashboardRepository.SubModalTicketCompletionPerformace(app, db, pageSize, page, typeId, isExternal, isPIC, assigneeId)
 	if err != nil {
-		return SubDashboardModalTicketModel, err
+		return SubDashboardModalTicketModel, 0, err
 	}
-	return SubDashboardModalTicketModel, err
+
+	totalCount, err = dashboardServicesImpl.DashboardRepository.TotalSubModalTicketCompletionPerformace(app, db, typeId, isExternal, isPIC, assigneeId)
+	if err != nil {
+		return SubDashboardModalTicketModel, 0, err
+	}
+	return SubDashboardModalTicketModel, totalCount, err
 }
 
 func (dashboardServicesImpl *DashboardServicesImpl) Create(app *fiber.Ctx, user *usermodel.User) error {

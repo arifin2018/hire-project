@@ -13,7 +13,8 @@ type DashboardRepository interface {
 	TotalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB) (totalCount int64, err error)
 	ModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, pageSize int, page int, typeId int, isExternal int, assigneeId int) (DashboardModalTicketModel []dashboardmodel.DashboardModalTicketModel, err error)
 	TotalModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, assigneeId int) (totalCount int64, err error)
-	SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, isPIC int, assigneeId int) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
+	SubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, pageSize int, page int, typeId int, isExternal int, isPIC int, assigneeId int) (SubDashboardModalTicketModel []dashboardmodel.DashboardSubModalTicketModel, err error)
+	TotalSubModalTicketCompletionPerformace(app *fiber.Ctx, db *gorm.DB, typeId int, isExternal int, isPIC int, assigneeId int) (totalCount int64, err error)
 }
 
 type DashboardRepositoryImpl struct {
